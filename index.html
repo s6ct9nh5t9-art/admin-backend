@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>管理员控制台 v24.2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root{--bg:#f0f4f8;--primary:#4f46e5;--danger:#ef4444;--text:#1e293b;--text-light:#64748b;--border:#e2e8f0}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;min-height:100vh}
+        #app{width:100%;max-width:480px;background:#fff;min-height:100vh;box-shadow:0 20px 60px rgba(0,0,0,0.12);padding:20px 16px 40px}
+        .login-wrap{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:80vh}
+        .login-card{background:#fff;border-radius:24px;padding:32px 24px;width:100%;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,0.08);text-align:center}
+        .login-card h2{font-size:24px;font-weight:700;margin-bottom:8px}
+        .login-card .sub{color:var(--text-light);margin-bottom:24px;font-size:14px}
+        .login-card input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;margin-bottom:14px;outline:none;background:#f8fafc}
+        .login-card button{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer}
+        .login-card .err{color:var(--danger);margin-top:10px;font-size:14px;min-height:20px}
+        .header{display:flex;justify-content:space-between;align-items:center;padding:8px 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
+        .header .title{font-size:20px;font-weight:700}
+        .header .badge{background:#e0e7ff;color:#4338ca;padding:4px 12px;border-radius:20px;font-size:12px}
+        .header button{background:#fee2e2;color:#dc2626;border:none;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer}
+        .tab-nav{display:flex;gap:4px;background:#f1f5f9;padding:4px;border-radius:12px;margin-bottom:16px;flex-wrap:wrap}
+        .tab-btn{flex:1;min-width:60px;padding:10px 6px;border:none;background:transparent;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-light)}
+        .tab-btn.active{background:var(--primary);color:#fff}
+        .card{background:#fff;border-radius:16px;padding:16px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.04);border:1px solid #f1f5f9}
+        .card h3{font-size:15px;font-weight:600;margin-bottom:12px}
+        .card p{font-size:13px;color:var(--text-light);margin-bottom:12px}
+        .form-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+        .form-grp{display:flex;flex-direction:column;gap:4px;flex:1;min-width:80px}
+        .form-grp label{font-size:11px;font-weight:600;color:var(--text-light)}
+        .form-grp input,.form-grp select{padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#f8fafc}
+        .btn{padding:10px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+        .btn-primary{background:var(--primary);color:#fff}
+        .btn-danger{background:#fee2e2;color:#dc2626}
+        .btn-success{background:#d1fae5;color:#059669}
+        .btn-sm{padding:8px 12px;font-size:11px}
+        .btn-xs{padding:6px 10px;font-size:11px;border-radius:4px;margin:2px}
+        .btn-block{width:100%;justify-content:center}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th{background:#f8fafc;font-weight:600;color:var(--text-light);padding:8px 10px;text-align:left;border-bottom:2px solid var(--border)}
+        td{padding:8px 10px;border-bottom:1px solid #f1f5f9}
+        .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #f1f5f9}
+        .tag{display:inline-block;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600}
+        .tag-admin{background:#fecaca;color:#991b1b}.tag-user{background:#e0e7ff;color:#3730a3}
+        .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center}
+        .modal-overlay.show{display:flex}
+        .modal-box{background:#fff;border-radius:20px;padding:24px 20px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+        .modal-box h3{font-size:16px;margin-bottom:16px}
+        .modal-box p{font-size:14px;margin-bottom:16px;color:var(--text)}
+        .modal-box input[type=password],.modal-box input[type=file]{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;background:#f8fafc}
+        .modal-actions{display:flex;gap:10px}.modal-actions button{flex:1}
+        .close-btn{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af}
+        .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;background:#0f172a;color:#fff;padding:12px 24px;border-radius:14px;font-size:14px;text-align:center;max-width:90%;animation:toastIn 0.3s ease,toastOut 0.3s ease 2s forwards}
+        .toast-success{background:#16a34a}.toast-error{background:#dc2626}
+        @keyframes toastIn{0%{opacity:0;transform:translate(-50%,20px)}100%{opacity:1;transform:translate(-50%,0)}}
+        @keyframes toastOut{0%{opacity:1}100%{opacity:0}}
+    </style>
+</head>
+<body>
+<div id="app">
+    <div id="loginPanel" class="login-wrap">
+        <div class="login-card">
+            <h2>🔐 管理员控制台</h2>
+            <p class="sub">仓库管理系统 · 后台管理</p>
+            <input type="text" id="loginUsername" placeholder="管理员账号" value="admin">
+            <input type="password" id="loginPassword" placeholder="密码" value="admin123">
+            <button id="loginBtn">登 录</button>
+            <div class="err" id="loginError"></div>
+        </div>
+    </div>
+    <div id="mainPanel" style="display:none;">
+        <div class="header"><div class="title">📦 管理控制台</div><div><span class="badge" id="headerUser"></span> <button id="logoutBtn">退出</button></div></div>
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="users">👥 用户</button>
+            <button class="tab-btn" data-tab="teams">🏢 用户组</button>
+            <button class="tab-btn" data-tab="export">📤 导出</button>
+            <button class="tab-btn" data-tab="backup">💾 备份</button>
+        </div>
+        <!-- 用户管理 -->
+        <div id="tab-users">
+            <div class="card"><h3>📋 所有用户 <button class="btn btn-sm btn-primary" id="refreshUsersBtn" style="margin-left:auto;">🔄</button></h3><div class="table-wrap"><table><thead><tr><th>账号</th><th>姓名</th><th>角色</th><th>操作</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div>
+        </div>
+        <!-- 用户组 -->
+        <div id="tab-teams" style="display:none;">
+            <div class="card"><h3>➕ 创建用户组</h3><div class="form-row"><div class="form-grp"><label>组名</label><input id="newTeamName"></div><div class="form-grp"><label>描述</label><input id="newTeamDesc"></div><button class="btn btn-primary" id="createTeamBtn">创建</button></div></div>
+            <div class="card"><h3>📋 用户组列表 <button class="btn btn-sm btn-primary" id="refreshTeamsBtn" style="margin-left:auto;">🔄</button></h3><div class="table-wrap"><table><thead><tr><th>组名</th><th>成员</th><th>操作</th></tr></thead><tbody id="teamTableBody"></tbody></table></div></div>
+        </div>
+        <!-- 导出 -->
+        <div id="tab-export" style="display:none;">
+            <div class="card"><h3>📤 导出数据</h3><div class="form-row"><div class="form-grp"><label>数据表</label><select id="exportTable"><option value="materials">物料</option><option value="records">记录</option><option value="scan_records">盘点</option><option value="locations">储位</option><option value="boms">BOM</option></select></div><div class="form-grp"><label>格式</label><select id="exportFormat"><option value="xlsx">Excel</option><option value="csv">CSV</option></select></div><button class="btn btn-success" id="exportBtn">📤 分享导出</button></div><div id="exportStatus" style="font-size:12px;margin-top:8px;"></div></div>
+        </div>
+        <!-- 备份 -->
+        <div id="tab-backup" style="display:none;">
+            <div class="card"><h3>💾 数据备份</h3><p>备份所有用户数据为一个文件</p><button class="btn btn-primary btn-block" id="backupBtn">📤 分享备份文件</button><div id="backupStatus" style="font-size:12px;margin-top:8px;"></div></div>
+            <div class="card"><h3>📂 数据恢复</h3><p style="color:var(--danger);">⚠️ 上传备份文件将覆盖所有现有数据</p><input type="file" id="restoreFile" accept=".json" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:12px;background:#f8fafc;"><button class="btn btn-danger btn-block" id="restoreBtn">⚠️ 上传并恢复</button><div id="restoreStatus" style="font-size:12px;margin-top:8px;"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="teamMemberModal"><div class="modal-box"><button class="close-btn" id="closeMemberBtn">&times;</button><h3 id="teamMemberTitle"></h3><div id="teamMemberContent"></div></div></div>
+<div class="modal-overlay" id="confirmModal"><div class="modal-box"><h3 id="confirmTitle"></h3><p id="confirmMsg"></p><div class="modal-actions"><button class="btn" style="background:#f1f5f9;color:#475569;" id="confirmCancelBtn">取消</button><button class="btn btn-danger" id="confirmOkBtn">确认</button></div></div></div>
+<div class="modal-overlay" id="passwordModal"><div class="modal-box"><h3>🔑 修改密码</h3><input type="password" id="newPasswordInput" placeholder="输入新密码（至少6位）"><div class="modal-actions"><button class="btn" style="background:#f1f5f9;color:#475569;" id="passwordCancelBtn">取消</button><button class="btn btn-primary" id="passwordOkBtn">确认修改</button></div></div></div>
+<div id="toastContainer"></div>
+
+<script>
+var SUPABASE_URL='https://nrnncqeopxwbhbfecgpa.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ybm5jcWVvcHh3YmhiZmVjZ3BhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDAyMzQsImV4cCI6MjA5NjQxNjIzNH0.II_DML0biZ_6OMRi9GZY7TEI3y8IKbyOvUwgX7GhB8s';
+var currentAdmin=null,confirmCallback=null,passwordCallback=null;
+
+function api(p,o){
+    o=o||{};
+    return fetch(SUPABASE_URL+p,{...o,headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...o.headers}})
+    .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t)});if(r.status===204)return null;return r.json()});
+}
+function rpc(fn,params){return api('/rest/v1/rpc/'+fn,{method:'POST',body:JSON.stringify(params||{})});}
+function toast(msg,type){var e=document.createElement('div');e.className='toast toast-'+(type||'success');e.textContent=msg;document.getElementById('toastContainer').appendChild(e);setTimeout(function(){e.remove()},2500);}
+function showModal(id){document.getElementById(id).classList.add('show');}
+function hideModal(id){document.getElementById(id).classList.remove('show');}
+function showConfirm(title,msg,cb){document.getElementById('confirmTitle').textContent=title;document.getElementById('confirmMsg').textContent=msg;confirmCallback=cb;showModal('confirmModal');}
+function showPasswordModal(cb){document.getElementById('newPasswordInput').value='';passwordCallback=cb;showModal('passwordModal');}
+function shareOrDownload(blob,fn,s,label){
+    var file=new File([blob],fn,{type:blob.type});
+    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+        navigator.share({title:fn,files:[file]}).then(function(){s.textContent='✅ '+label+'分享成功';toast('分享成功','success');}).catch(function(e){
+            if(e.name!=='AbortError'){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();s.textContent='✅ 已下载';}
+        });
+    }else{
+        var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();
+        s.textContent='✅ 已下载';toast('下载成功','success');
+    }
+}
+
+// 登录
+document.getElementById('loginBtn').addEventListener('click',function(){
+    var u=document.getElementById('loginUsername').value.trim(),p=document.getElementById('loginPassword').value;
+    var err=document.getElementById('loginError');
+    if(!u||!p){err.textContent='请输入账号密码';return;}
+    err.textContent='登录中...';
+    rpc('admin_login',{p_username:u,p_password:p}).then(function(r){
+        if(r&&r[0]&&r[0].success){currentAdmin=r[0];document.getElementById('loginPanel').style.display='none';document.getElementById('mainPanel').style.display='block';document.getElementById('headerUser').textContent='👤 '+(currentAdmin.real_name||currentAdmin.username);loadUsers();loadTeams();}
+        else{err.textContent='❌ '+(r&&r[0]?r[0].message:'登录失败');}
+    }).catch(function(e){err.textContent='❌ '+e.message;});
+});
+document.getElementById('logoutBtn').addEventListener('click',function(){currentAdmin=null;document.getElementById('loginPanel').style.display='flex';document.getElementById('mainPanel').style.display='none';});
+
+// Tab
+document.querySelectorAll('.tab-btn').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active');});
+    this.classList.add('active');
+    ['users','teams','export','backup'].forEach(function(t){document.getElementById('tab-'+t).style.display='none';});
+    document.getElementById('tab-'+this.dataset.tab).style.display='block';
+    if(this.dataset.tab==='users')loadUsers();
+    if(this.dataset.tab==='teams')loadTeams();
+});});
+
+// 确认弹窗
+document.getElementById('confirmOkBtn').addEventListener('click',function(){hideModal('confirmModal');if(confirmCallback){var cb=confirmCallback;confirmCallback=null;cb();}});
+document.getElementById('confirmCancelBtn').addEventListener('click',function(){hideModal('confirmModal');confirmCallback=null;});
+document.getElementById('passwordOkBtn').addEventListener('click',function(){var pw=document.getElementById('newPasswordInput').value;if(!pw||pw.length<6){toast('密码至少6位','error');return;}hideModal('passwordModal');if(passwordCallback){var cb=passwordCallback;passwordCallback=null;cb(pw);}});
+document.getElementById('passwordCancelBtn').addEventListener('click',function(){hideModal('passwordModal');passwordCallback=null;});
+
+// ==================== 用户管理 ====================
+function loadUsers(){
+    var t=document.getElementById('userTableBody');t.innerHTML='<tr><td colspan="4">加载中...</td></tr>';
+    rpc('admin_get_users_full',{p_admin_id:currentAdmin.user_id}).then(function(users){
+        if(!users||!users.length){t.innerHTML='<tr><td colspan="4">暂无用户</td></tr>';return;}
+        t.innerHTML=users.map(function(u){
+            return'<tr><td><strong>'+u.account+'</strong></td><td>'+(u.real_name||'-')+'</td><td><span class="tag '+(u.is_admin?'tag-admin':'tag-user')+'">'+(u.is_admin?'管理员':'用户')+'</span></td><td>'+
+            '<button class="btn btn-xs btn-primary user-pwd-btn" data-uid="'+u.user_id+'" data-acc="'+u.account+'">🔑 改密</button> '+
+            (u.user_id!==currentAdmin.user_id?'<button class="btn btn-xs btn-danger user-del-btn" data-uid="'+u.user_id+'" data-acc="'+u.account+'">🗑 删除</button>':'<span style="color:#9ca3af;font-size:10px;">当前</span>')+
+            '</td></tr>';
+        }).join('');
+        t.querySelectorAll('.user-pwd-btn').forEach(function(b){b.addEventListener('click',function(){changePassword(parseInt(this.dataset.uid),this.dataset.acc);});});
+        t.querySelectorAll('.user-del-btn').forEach(function(b){b.addEventListener('click',function(){deleteUser(parseInt(this.dataset.uid),this.dataset.acc);});});
+    }).catch(function(e){t.innerHTML='<tr><td colspan="4">加载失败: '+e.message+'</td></tr>';});
+}
+document.getElementById('refreshUsersBtn').addEventListener('click',loadUsers);
+
+function changePassword(uid,acc){
+    showPasswordModal(function(pw){
+        rpc('admin_reset_password',{p_admin_id:currentAdmin.user_id,p_target_user_id:uid,p_new_password:pw}).then(function(r){
+            toast(r[0]&&r[0].success?'密码已重置':(r[0]?r[0].message:'失败'),r[0]&&r[0].success?'success':'error');
+        }).catch(function(e){toast(e.message,'error');});
+    });
+}
+
+function deleteUser(uid,acc){
+    showConfirm('删除用户','确定删除「'+acc+'」？\n所有数据将被清除！',function(){
+        rpc('admin_delete_user',{p_admin_id:currentAdmin.user_id,p_target_user_id:uid}).then(function(r){
+            if(r[0]&&r[0].success){toast(r[0].message,'success');loadUsers();loadTeams();}
+            else toast(r[0]?r[0].message:'失败','error');
+        }).catch(function(e){toast(e.message,'error');});
+    });
+}
+
+// ==================== 用户组管理 ====================
+function loadTeams(){
+    var t=document.getElementById('teamTableBody');t.innerHTML='<tr><td colspan="3">加载中...</td></tr>';
+    rpc('admin_get_teams',{p_admin_id:currentAdmin.user_id}).then(function(teams){
+        if(!teams||!teams.length){t.innerHTML='<tr><td colspan="3">暂无用户组</td></tr>';return;}
+        t.innerHTML=teams.map(function(tm){return'<tr><td><strong>'+tm.team_name+'</strong></td><td>'+tm.member_count+'人</td><td>'+
+            '<button class="btn btn-xs btn-primary team-members-btn" data-tid="'+tm.team_id+'" data-tname="'+tm.team_name+'">👥 成员</button> '+
+            '<button class="btn btn-xs btn-danger team-delete-btn" data-tid="'+tm.team_id+'" data-tname="'+tm.team_name+'">🗑 删除</button></td></tr>';}).join('');
+        t.querySelectorAll('.team-members-btn').forEach(function(b){b.addEventListener('click',function(){viewMembers(parseInt(this.dataset.tid),this.dataset.tname);});});
+        t.querySelectorAll('.team-delete-btn').forEach(function(b){b.addEventListener('click',function(){deleteTeam(parseInt(this.dataset.tid),this.dataset.tname);});});
+    }).catch(function(e){t.innerHTML='<tr><td colspan="3">加载失败: '+e.message+'</td></tr>';});
+}
+document.getElementById('createTeamBtn').addEventListener('click',function(){
+    var n=document.getElementById('newTeamName').value.trim(),d=document.getElementById('newTeamDesc').value.trim();
+    if(!n){toast('请输入组名','error');return;}
+    rpc('admin_create_team',{p_admin_id:currentAdmin.user_id,p_name:n,p_description:d}).then(function(r){
+        if(r[0]&&r[0].success){toast(r[0].message,'success');loadTeams();document.getElementById('newTeamName').value='';document.getElementById('newTeamDesc').value='';}
+        else toast(r[0]?r[0].message:'失败','error');
+    }).catch(function(e){toast(e.message,'error');});
+});
+document.getElementById('refreshTeamsBtn').addEventListener('click',loadTeams);
+
+function deleteTeam(id,name){
+    showConfirm('删除用户组','确定删除「'+name+'」？',function(){
+        rpc('admin_delete_team',{p_admin_id:currentAdmin.user_id,p_team_id:id}).then(function(r){
+            if(r[0]&&r[0].success){toast(r[0].message,'success');loadTeams();}
+            else toast(r[0]?r[0].message:'失败','error');
+        }).catch(function(e){toast(e.message,'error');});
+    });
+}
+
+function viewMembers(tid,tname){
+    var c=document.getElementById('teamMemberContent');document.getElementById('teamMemberTitle').textContent=tname+' - 成员';c.innerHTML='加载中...';showModal('teamMemberModal');
+    Promise.all([rpc('admin_get_team_members',{p_admin_id:currentAdmin.user_id,p_team_id:tid}),rpc('admin_get_ungrouped_users',{p_admin_id:currentAdmin.user_id})]).then(function(r){
+        var members=r[0],ungrouped=r[1],h='';
+        if(members&&members.length){h+='<table style="margin-bottom:12px;"><tr><th>用户</th><th>操作</th></tr>';
+            members.forEach(function(m){h+='<tr><td>'+m.account+' ('+(m.real_name||'')+')</td><td><button class="btn btn-xs btn-danger remove-mbr-btn" data-tid="'+tid+'" data-uid="'+m.user_id+'" data-acc="'+m.account+'" data-tname="'+tname+'">移除</button></td></tr>';});
+            h+='</table>';}else h+='<p style="color:#9ca3af;">暂无成员</p>';
+        if(ungrouped&&ungrouped.length){h+='<select id="addMemberSelect" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;"><option value="">选择用户...</option>';
+            ungrouped.forEach(function(u){h+='<option value="'+u.user_id+'">'+u.account+' ('+(u.real_name||'')+')</option>';});
+            h+='</select><button class="btn btn-primary btn-sm" id="addMbrBtn">➕ 添加</button>';}else h+='<p style="color:#9ca3af;">所有用户已分组</p>';
+        c.innerHTML=h;var addBtn=document.getElementById('addMbrBtn');if(addBtn)addBtn.addEventListener('click',function(){addMember(tid,tname);});
+        c.querySelectorAll('.remove-mbr-btn').forEach(function(b){b.addEventListener('click',function(){removeMember(parseInt(this.dataset.tid),parseInt(this.dataset.uid),this.dataset.acc,this.dataset.tname);});});
+    }).catch(function(e){c.innerHTML='<p style="color:#dc2626;">加载失败: '+e.message+'</p>';});
+}
+document.getElementById('closeMemberBtn').addEventListener('click',function(){hideModal('teamMemberModal');});
+function addMember(tid,tname){var s=document.getElementById('addMemberSelect');if(!s||!s.value){toast('请选择用户','error');return;}rpc('admin_add_user_to_team',{p_admin_id:currentAdmin.user_id,p_user_id:parseInt(s.value),p_team_id:tid}).then(function(r){if(r[0]&&r[0].success){toast(r[0].message,'success');viewMembers(tid,tname);loadTeams();}else toast(r[0]?r[0].message:'失败','error');}).catch(function(e){toast(e.message,'error');});}
+function removeMember(tid,uid,acc,tname){showConfirm('移除成员','确定将「'+acc+'」从「'+tname+'」移除？',function(){rpc('admin_remove_user_from_team',{p_admin_id:currentAdmin.user_id,p_user_id:uid,p_team_id:tid}).then(function(r){if(r[0]&&r[0].success){toast(r[0].message,'success');viewMembers(tid,tname);loadTeams();}else toast(r[0]?r[0].message:'失败','error');}).catch(function(e){toast(e.message,'error');});});}
+
+// ==================== 导出 ====================
+document.getElementById('exportBtn').addEventListener('click',function(){
+    var table=document.getElementById('exportTable').value,format=document.getElementById('exportFormat').value;
+    var s=document.getElementById('exportStatus');s.textContent='导出中...';
+    var rpcMap={materials:'admin_get_all_materials',records:'admin_get_all_records',scan_records:'admin_get_all_scan_records',messages:'admin_get_all_messages'};
+    var p=rpcMap[table]?rpc(rpcMap[table],{p_admin_id:currentAdmin.user_id}):api('/rest/v1/'+table+'?select=*');
+    p.then(function(data){
+        if(!data||!data.length){s.textContent='无数据';return;}
+        var ds=new Date().toISOString().slice(0,10),fn=table+'_'+ds,blob;
+        if(format==='csv'){var h=Object.keys(data[0]),rows=[h.join(',')];data.forEach(function(r){rows.push(h.map(function(k){var v=r[k]??'';return'"'+String(v).replace(/"/g,'""')+'"';}).join(','));});blob=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv'});fn+='.csv';}
+        else{var ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data');blob=new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/octet-stream'});fn+='.xlsx';}
+        shareOrDownload(blob,fn,s,'导出');
+    }).catch(function(e){s.textContent='❌ '+e.message;toast(e.message,'error');});
+});
+
+// ==================== 备份 ====================
+document.getElementById('backupBtn').addEventListener('click',function(){
+    var s=document.getElementById('backupStatus');s.textContent='备份中...';
+    rpc('admin_backup_all',{p_admin_id:currentAdmin.user_id}).then(function(data){
+        var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+        var fn='wms_backup_'+new Date().toISOString().slice(0,10)+'.json';
+        shareOrDownload(blob,fn,s,'备份');
+    }).catch(function(e){s.textContent='❌ '+e.message;toast(e.message,'error');});
+});
+
+document.getElementById('restoreBtn').addEventListener('click',function(){
+    var file=document.getElementById('restoreFile').files[0];
+    if(!file){toast('请选择备份文件','error');return;}
+    showConfirm('恢复数据','⚠️ 将覆盖所有现有数据，确定恢复？',function(){
+        var s=document.getElementById('restoreStatus');s.textContent='恢复中...';
+        var reader=new FileReader();
+        reader.onload=function(e){
+            try{var data=JSON.parse(e.target.result);}catch(err){s.textContent='❌ 文件格式错误';return;}
+            rpc('admin_restore_all',{p_admin_id:currentAdmin.user_id,p_data:data}).then(function(r){
+                if(r[0]&&r[0].success){s.textContent='✅ '+r[0].message;toast('恢复成功','success');loadUsers();loadTeams();}
+                else s.textContent='❌ '+(r[0]?r[0].message:'失败');
+            }).catch(function(e){s.textContent='❌ '+e.message;});
+        };
+        reader.readAsText(file);
+    });
+});
+</script>
+</body>
+</html>
