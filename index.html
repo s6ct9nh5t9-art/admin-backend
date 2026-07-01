@@ -3,18 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="管理控制台">
-    <link rel="apple-touch-icon" href="icon-admin.png?v=3">
     <title>管理员控制台 v24.2</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
-        :root{--bg:#f0f4f8;--primary:#4f46e5;--danger:#ef4444;--text:#1e293b;--text-light:#64748b;--border:#e2e8f0}
+        :root{--bg:#f0f4f8;--primary:#4f46e5;--danger:#ef4444;--warning:#f59e0b;--text:#1e293b;--text-light:#64748b;--border:#e2e8f0}
         *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;min-height:100vh;
-            padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;justify-content:center;min-height:100vh}
         #app{width:100%;max-width:480px;background:#fff;min-height:100vh;box-shadow:0 20px 60px rgba(0,0,0,0.12);padding:20px 16px 40px}
         .login-wrap{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:80vh}
         .login-card{background:#fff;border-radius:24px;padding:32px 24px;width:100%;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,0.08);text-align:center}
@@ -40,6 +35,7 @@
         .btn{padding:10px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
         .btn-primary{background:var(--primary);color:#fff}
         .btn-danger{background:#fee2e2;color:#dc2626}
+        .btn-warning{background:#fef3c7;color:#92400e}
         .btn-success{background:#d1fae5;color:#059669}
         .btn-sm{padding:8px 12px;font-size:11px}
         .btn-xs{padding:6px 10px;font-size:11px;border-radius:4px;margin:2px}
@@ -50,18 +46,27 @@
         .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #f1f5f9}
         .tag{display:inline-block;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600}
         .tag-admin{background:#fecaca;color:#991b1b}.tag-user{background:#e0e7ff;color:#3730a3}
+        .search-box{position:relative;margin-bottom:12px}
+        .search-box input{width:100%;padding:10px 14px 10px 36px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;background:#f8fafc}
+        .search-box i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:13px}
         .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center}
         .modal-overlay.show{display:flex}
         .modal-box{background:#fff;border-radius:20px;padding:24px 20px;width:90%;max-width:400px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
         .modal-box h3{font-size:16px;margin-bottom:16px}
         .modal-box p{font-size:14px;margin-bottom:16px;color:var(--text)}
-        .modal-box input[type=password],.modal-box input[type=file]{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;background:#f8fafc}
+        .modal-box input[type=password],.modal-box input[type=file],.modal-box input[type=number]{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;background:#f8fafc}
         .modal-actions{display:flex;gap:10px}.modal-actions button{flex:1}
         .close-btn{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af}
         .toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:999;background:#0f172a;color:#fff;padding:12px 24px;border-radius:14px;font-size:14px;text-align:center;max-width:90%;animation:toastIn 0.3s ease,toastOut 0.3s ease 2s forwards}
-        .toast-success{background:#16a34a}.toast-error{background:#dc2626}
+        .toast-success{background:#16a34a}.toast-error{background:#dc2626}.toast-warning{background:#f59e0b}
         @keyframes toastIn{0%{opacity:0;transform:translate(-50%,20px)}100%{opacity:1;transform:translate(-50%,0)}}
         @keyframes toastOut{0%{opacity:1}100%{opacity:0}}
+        .reset-summary{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+        .reset-summary .stat-card{flex:1;min-width:80px;background:#f8fafc;border-radius:12px;padding:14px;text-align:center;border:1px solid #f1f5f9}
+        .stat-card .num{font-size:22px;font-weight:700;color:var(--primary)}
+        .stat-card .lbl{font-size:10px;color:var(--text-light);margin-top:2px}
+        .reset-history-item{padding:10px 12px;background:#f8fafc;border-radius:8px;margin-bottom:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center}
+        .reset-history-item .time{color:var(--text-light);font-size:10px}
     </style>
 </head>
 <body>
@@ -81,19 +86,55 @@
         <div class="tab-nav">
             <button class="tab-btn active" data-tab="users">👥 用户</button>
             <button class="tab-btn" data-tab="teams">🏢 用户组</button>
+            <button class="tab-btn" data-tab="reset">🔄 库存重置</button>
             <button class="tab-btn" data-tab="export">📤 导出</button>
             <button class="tab-btn" data-tab="backup">💾 备份</button>
         </div>
+        <!-- 用户管理 -->
         <div id="tab-users">
             <div class="card"><h3>📋 所有用户 <button class="btn btn-sm btn-primary" id="refreshUsersBtn" style="margin-left:auto;">🔄</button></h3><div class="table-wrap"><table><thead><tr><th>账号</th><th>姓名</th><th>角色</th><th>操作</th></tr></thead><tbody id="userTableBody"></tbody></table></div></div>
         </div>
+        <!-- 用户组 -->
         <div id="tab-teams" style="display:none;">
             <div class="card"><h3>➕ 创建用户组</h3><div class="form-row"><div class="form-grp"><label>组名</label><input id="newTeamName"></div><div class="form-grp"><label>描述</label><input id="newTeamDesc"></div><button class="btn btn-primary" id="createTeamBtn">创建</button></div></div>
             <div class="card"><h3>📋 用户组列表 <button class="btn btn-sm btn-primary" id="refreshTeamsBtn" style="margin-left:auto;">🔄</button></h3><div class="table-wrap"><table><thead><tr><th>组名</th><th>成员</th><th>操作</th></tr></thead><tbody id="teamTableBody"></tbody></table></div></div>
         </div>
+        <!-- 库存重置（新增） -->
+        <div id="tab-reset" style="display:none;">
+            <div class="card">
+                <h3>📊 库存概览</h3>
+                <div class="reset-summary" id="resetSummary"></div>
+                <button class="btn btn-sm btn-primary" id="refreshResetSummaryBtn">🔄 刷新统计</button>
+            </div>
+            <div class="card">
+                <h3>🔍 重置特定物料库存</h3>
+                <div class="search-box"><i class="fas fa-search"></i><input id="materialSearch" placeholder="搜索物料编号或名称..."></div>
+                <div class="table-wrap" style="max-height:300px;overflow-y:auto;" id="materialListWrap">
+                    <table><thead><tr><th>编号</th><th>名称</th><th>当前库存</th><th>操作</th></tr></thead><tbody id="materialTableBody"><tr><td colspan="4">输入关键词搜索...</td></tr></tbody></table>
+                </div>
+            </div>
+            <div class="card">
+                <h3>⚠️ 批量重置选项</h3>
+                <div class="form-row">
+                    <button class="btn btn-warning btn-block" id="resetZeroBtn">📉 所有物料库存归零</button>
+                </div>
+                <div class="form-row">
+                    <button class="btn btn-warning btn-block" id="resetDefaultBtn">📋 重置为默认值</button>
+                </div>
+                <div class="form-row">
+                    <button class="btn btn-danger btn-block" id="clearAllStockBtn">🗑 清空所有库存记录</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📝 最近重置记录</h3>
+                <div id="resetHistory"><p style="color:#9ca3af;">加载中...</p></div>
+            </div>
+        </div>
+        <!-- 导出 -->
         <div id="tab-export" style="display:none;">
             <div class="card"><h3>📤 导出数据</h3><div class="form-row"><div class="form-grp"><label>数据表</label><select id="exportTable"><option value="materials">物料</option><option value="records">记录</option><option value="scan_records">盘点</option><option value="locations">储位</option><option value="boms">BOM</option></select></div><div class="form-grp"><label>格式</label><select id="exportFormat"><option value="xlsx">Excel</option><option value="csv">CSV</option></select></div><button class="btn btn-success" id="exportBtn">📤 分享导出</button></div><div id="exportStatus" style="font-size:12px;margin-top:8px;"></div></div>
         </div>
+        <!-- 备份 -->
         <div id="tab-backup" style="display:none;">
             <div class="card"><h3>💾 数据备份</h3><p>备份所有用户数据为一个文件</p><button class="btn btn-primary btn-block" id="backupBtn">📤 分享备份文件</button><div id="backupStatus" style="font-size:12px;margin-top:8px;"></div></div>
             <div class="card"><h3>📂 数据恢复</h3><p style="color:var(--danger);">⚠️ 上传备份文件将覆盖所有现有数据</p><input type="file" id="restoreFile" accept=".json" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;margin-bottom:12px;background:#f8fafc;"><button class="btn btn-danger btn-block" id="restoreBtn">⚠️ 上传并恢复</button><div id="restoreStatus" style="font-size:12px;margin-top:8px;"></div></div>
@@ -104,17 +145,19 @@
 <div class="modal-overlay" id="teamMemberModal"><div class="modal-box"><button class="close-btn" id="closeMemberBtn">&times;</button><h3 id="teamMemberTitle"></h3><div id="teamMemberContent"></div></div></div>
 <div class="modal-overlay" id="confirmModal"><div class="modal-box"><h3 id="confirmTitle"></h3><p id="confirmMsg"></p><div class="modal-actions"><button class="btn" style="background:#f1f5f9;color:#475569;" id="confirmCancelBtn">取消</button><button class="btn btn-danger" id="confirmOkBtn">确认</button></div></div></div>
 <div class="modal-overlay" id="passwordModal"><div class="modal-box"><h3>🔑 修改密码</h3><input type="password" id="newPasswordInput" placeholder="输入新密码（至少6位）"><div class="modal-actions"><button class="btn" style="background:#f1f5f9;color:#475569;" id="passwordCancelBtn">取消</button><button class="btn btn-primary" id="passwordOkBtn">确认修改</button></div></div></div>
+<div class="modal-overlay" id="resetMaterialModal"><div class="modal-box"><button class="close-btn" id="closeResetMaterialBtn">&times;</button><h3 id="resetMaterialTitle">重置库存</h3><p id="resetMaterialInfo" style="font-size:13px;"></p><div class="form-grp" style="margin-bottom:12px;"><label>新库存数量</label><input type="number" id="resetStockValue" placeholder="输入新数量" min="0" step="any"></div><div class="modal-actions"><button class="btn" style="background:#f1f5f9;color:#475569;" id="resetMaterialCancelBtn">取消</button><button class="btn btn-primary" id="resetMaterialOkBtn">确认重置</button></div></div></div>
 <div id="toastContainer"></div>
 
 <script>
 var SUPABASE_URL='https://nrnncqeopxwbhbfecgpa.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ybm5jcWVvcHh3YmhiZmVjZ3BhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDAyMzQsImV4cCI6MjA5NjQxNjIzNH0.II_DML0biZ_6OMRi9GZY7TEI3y8IKbyOvUwgX7GhB8s';
 var currentAdmin=null,confirmCallback=null,passwordCallback=null;
+var materialSearchTimer=null,currentResetMaterial=null;
 
 function api(p,o){
     o=o||{};
     return fetch(SUPABASE_URL+p,{...o,headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',...o.headers}})
-    .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t)});if(r.status===204)return null;return r.json()});
+    .then(function(r){if(!r.ok)return r.text().then(function(t){throw new Error(t)});if(r.status===204)return null;return r.json();});
 }
 function rpc(fn,params){return api('/rest/v1/rpc/'+fn,{method:'POST',body:JSON.stringify(params||{})});}
 function toast(msg,type){var e=document.createElement('div');e.className='toast toast-'+(type||'success');e.textContent=msg;document.getElementById('toastContainer').appendChild(e);setTimeout(function(){e.remove()},2500);}
@@ -134,6 +177,7 @@ function shareOrDownload(blob,fn,s,label){
     }
 }
 
+// 登录
 document.getElementById('loginBtn').addEventListener('click',function(){
     var u=document.getElementById('loginUsername').value.trim(),p=document.getElementById('loginPassword').value;
     var err=document.getElementById('loginError');
@@ -146,36 +190,162 @@ document.getElementById('loginBtn').addEventListener('click',function(){
 });
 document.getElementById('logoutBtn').addEventListener('click',function(){currentAdmin=null;document.getElementById('loginPanel').style.display='flex';document.getElementById('mainPanel').style.display='none';});
 
+// Tab切换
 document.querySelectorAll('.tab-btn').forEach(function(b){b.addEventListener('click',function(){
     document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active');});
     this.classList.add('active');
-    ['users','teams','export','backup'].forEach(function(t){document.getElementById('tab-'+t).style.display='none';});
+    ['users','teams','reset','export','backup'].forEach(function(t){document.getElementById('tab-'+t).style.display='none';});
     document.getElementById('tab-'+this.dataset.tab).style.display='block';
     if(this.dataset.tab==='users')loadUsers();
     if(this.dataset.tab==='teams')loadTeams();
+    if(this.dataset.tab==='reset'){loadResetSummary();loadResetHistory();}
 });});
 
+// 确认弹窗
 document.getElementById('confirmOkBtn').addEventListener('click',function(){hideModal('confirmModal');if(confirmCallback){var cb=confirmCallback;confirmCallback=null;cb();}});
 document.getElementById('confirmCancelBtn').addEventListener('click',function(){hideModal('confirmModal');confirmCallback=null;});
 document.getElementById('passwordOkBtn').addEventListener('click',function(){var pw=document.getElementById('newPasswordInput').value;if(!pw||pw.length<6){toast('密码至少6位','error');return;}hideModal('passwordModal');if(passwordCallback){var cb=passwordCallback;passwordCallback=null;cb(pw);}});
 document.getElementById('passwordCancelBtn').addEventListener('click',function(){hideModal('passwordModal');passwordCallback=null;});
 
+// 重置物料弹窗
+document.getElementById('closeResetMaterialBtn').addEventListener('click',function(){hideModal('resetMaterialModal');currentResetMaterial=null;});
+document.getElementById('resetMaterialCancelBtn').addEventListener('click',function(){hideModal('resetMaterialModal');currentResetMaterial=null;});
+document.getElementById('resetMaterialOkBtn').addEventListener('click',function(){
+    var val=document.getElementById('resetStockValue').value;
+    if(val===''||isNaN(val)||Number(val)<0){toast('请输入有效数量','error');return;}
+    if(!currentResetMaterial)return;
+    hideModal('resetMaterialModal');
+    executeResetMaterial(currentResetMaterial,parseInt(val));
+});
+
+// ==================== 库存重置 ====================
+function loadResetSummary(){
+    var s=document.getElementById('resetSummary');
+    s.innerHTML='<div class="stat-card"><div class="num">...</div><div class="lbl">物料种类</div></div><div class="stat-card"><div class="num">...</div><div class="lbl">库存总量</div></div><div class="stat-card"><div class="num">...</div><div class="lbl">储位数</div></div>';
+    rpc('admin_get_stock_summary',{p_admin_id:currentAdmin.user_id}).then(function(r){
+        if(r){
+            var d=r;
+            s.innerHTML='<div class="stat-card"><div class="num">'+(d.material_count||0)+'</div><div class="lbl">物料种类</div></div><div class="stat-card"><div class="num">'+(d.total_stock||0)+'</div><div class="lbl">库存总量</div></div><div class="stat-card"><div class="num">'+(d.location_count||0)+'</div><div class="lbl">储位数</div></div>';
+        }
+    }).catch(function(e){s.innerHTML='<div class="stat-card" style="color:#dc2626;">加载失败</div>';console.error(e);});
+}
+document.getElementById('refreshResetSummaryBtn').addEventListener('click',loadResetSummary);
+
+// 物料搜索
+document.getElementById('materialSearch').addEventListener('input',function(){
+    clearTimeout(materialSearchTimer);
+    var kw=this.value.trim();
+    var t=document.getElementById('materialTableBody');
+    if(!kw){t.innerHTML='<tr><td colspan="4" style="color:#9ca3af;">输入关键词搜索...</td></tr>';return;}
+    t.innerHTML='<tr><td colspan="4">搜索中...</td></tr>';
+    materialSearchTimer=setTimeout(function(){
+        rpc('admin_search_materials',{p_admin_id:currentAdmin.user_id,p_keyword:kw}).then(function(data){
+            if(!data||!data.length){t.innerHTML='<tr><td colspan="4" style="color:#9ca3af;">未找到匹配物料</td></tr>';return;}
+            t.innerHTML=data.map(function(m){
+                return'<tr><td><strong>'+m.code+'</strong></td><td>'+m.name+'</td><td>'+(m.stock_qty!=null?m.stock_qty:'0')+'</td>'+
+                '<td><button class="btn btn-xs btn-warning reset-one-btn" data-code="'+m.code+'" data-name="'+m.name+'" data-stock="'+(m.stock_qty||0)+'">🔄 重置</button></td></tr>';
+            }).join('');
+            t.querySelectorAll('.reset-one-btn').forEach(function(b){b.addEventListener('click',function(){
+                showResetMaterialModal(this.dataset.code,this.dataset.name,parseInt(this.dataset.stock));
+            });});
+        }).catch(function(e){t.innerHTML='<tr><td colspan="4" style="color:#dc2626;">搜索失败</td></tr>';console.error(e);});
+    },400);
+});
+
+function showResetMaterialModal(code,name,currentStock){
+    currentResetMaterial={code:code,name:name};
+    document.getElementById('resetMaterialTitle').textContent='重置库存 - '+code;
+    document.getElementById('resetMaterialInfo').innerHTML='物料: <strong>'+name+'</strong><br>当前库存: <strong>'+currentStock+'</strong>';
+    document.getElementById('resetStockValue').value=currentStock;
+    showModal('resetMaterialModal');
+}
+
+function executeResetMaterial(mat,newQty){
+    rpc('admin_reset_material_stock',{p_admin_id:currentAdmin.user_id,p_material_code:mat.code,p_new_quantity:newQty}).then(function(r){
+        if(r&&r.success){toast(r.message,'success');loadResetSummary();loadResetHistory();
+            var kw=document.getElementById('materialSearch').value.trim();if(kw)document.getElementById('materialSearch').dispatchEvent(new Event('input'));}
+        else toast(r?r.message:'重置失败','error');
+    }).catch(function(e){toast(e.message,'error');console.error(e);});
+}
+
+// 归零
+document.getElementById('resetZeroBtn').addEventListener('click',function(){
+    showConfirm('⚠️ 库存归零','确定将所有物料库存设置为 0？',function(){
+        rpc('admin_reset_all_stock_zero',{p_admin_id:currentAdmin.user_id}).then(function(r){
+            if(r&&r.success){toast(r.message,'success');loadResetSummary();loadResetHistory();}
+            else toast(r?r.message:'操作失败','error');
+        }).catch(function(e){toast(e.message,'error');console.error(e);});
+    });
+});
+
+// 默认值
+document.getElementById('resetDefaultBtn').addEventListener('click',function(){
+    showConfirm('📋 重置为默认值','确定将所有物料库存重置为默认值100？',function(){
+        rpc('admin_reset_all_stock_default',{p_admin_id:currentAdmin.user_id}).then(function(r){
+            if(r&&r.success){toast(r.message,'success');loadResetSummary();loadResetHistory();}
+            else toast(r?r.message:'操作失败','error');
+        }).catch(function(e){toast(e.message,'error');console.error(e);});
+    });
+});
+
+// 清空
+document.getElementById('clearAllStockBtn').addEventListener('click',function(){
+    showConfirm('🗑 清空所有库存','⚠️ 将所有物料库存设为 0？',function(){
+        rpc('admin_clear_all_stock',{p_admin_id:currentAdmin.user_id}).then(function(r){
+            if(r&&r.success){toast(r.message,'success');loadResetSummary();loadResetHistory();}
+            else toast(r?r.message:'操作失败','error');
+        }).catch(function(e){toast(e.message,'error');console.error(e);});
+    });
+});
+
+// 重置历史
+function loadResetHistory(){
+    var h=document.getElementById('resetHistory');
+    h.innerHTML='<p style="color:#9ca3af;">加载中...</p>';
+    rpc('admin_get_reset_history',{p_admin_id:currentAdmin.user_id}).then(function(data){
+        if(!data||!data.length){h.innerHTML='<p style="color:#9ca3af;">暂无重置记录</p>';return;}
+        h.innerHTML=data.slice(0,20).map(function(r){
+            var dt=new Date(r.reset_time);
+            var timeStr=isNaN(dt.getTime())?'':dt.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+            return'<div class="reset-history-item"><div><strong>'+(r.material_code||'全部')+'</strong> '+(r.material_name||'')+' → '+r.new_quantity+'<br><span style="font-size:10px;color:#64748b;">操作人: '+(r.operator||'-')+'</span></div><div class="time">'+timeStr+'</div></div>';
+        }).join('');
+    }).catch(function(e){h.innerHTML='<p style="color:#dc2626;">加载失败</p>';console.error(e);});
+}
+
+// ==================== 用户管理 ====================
 function loadUsers(){
     var t=document.getElementById('userTableBody');t.innerHTML='<tr><td colspan="4">加载中...</td></tr>';
     rpc('admin_get_users_full',{p_admin_id:currentAdmin.user_id}).then(function(users){
         if(!users||!users.length){t.innerHTML='<tr><td colspan="4">暂无用户</td></tr>';return;}
-        t.innerHTML=users.map(function(u){return'<tr><td><strong>'+u.account+'</strong></td><td>'+(u.real_name||'-')+'</td><td><span class="tag '+(u.is_admin?'tag-admin':'tag-user')+'">'+(u.is_admin?'管理员':'用户')+'</span></td><td>'+
+        t.innerHTML=users.map(function(u){
+            return'<tr><td><strong>'+u.account+'</strong></td><td>'+(u.real_name||'-')+'</td><td><span class="tag '+(u.is_admin?'tag-admin':'tag-user')+'">'+(u.is_admin?'管理员':'用户')+'</span></td><td>'+
             '<button class="btn btn-xs btn-primary user-pwd-btn" data-uid="'+u.user_id+'" data-acc="'+u.account+'">🔑 改密</button> '+
-            (u.user_id!==currentAdmin.user_id?'<button class="btn btn-xs btn-danger user-del-btn" data-uid="'+u.user_id+'" data-acc="'+u.account+'">🗑 删除</button>':'<span style="color:#9ca3af;font-size:10px;">当前</span>')+'</td></tr>';}).join('');
+            (u.user_id!==currentAdmin.user_id?'<button class="btn btn-xs btn-danger user-del-btn" data-uid="'+u.user_id+'" data-acc="'+u.account+'">🗑 删除</button>':'<span style="color:#9ca3af;font-size:10px;">当前</span>')+
+            '</td></tr>';
+        }).join('');
         t.querySelectorAll('.user-pwd-btn').forEach(function(b){b.addEventListener('click',function(){changePassword(parseInt(this.dataset.uid),this.dataset.acc);});});
         t.querySelectorAll('.user-del-btn').forEach(function(b){b.addEventListener('click',function(){deleteUser(parseInt(this.dataset.uid),this.dataset.acc);});});
     }).catch(function(e){t.innerHTML='<tr><td colspan="4">加载失败: '+e.message+'</td></tr>';});
 }
 document.getElementById('refreshUsersBtn').addEventListener('click',loadUsers);
 
-function changePassword(uid,acc){showPasswordModal(function(pw){rpc('admin_reset_password',{p_admin_id:currentAdmin.user_id,p_target_user_id:uid,p_new_password:pw}).then(function(r){toast(r[0]&&r[0].success?'密码已重置':(r[0]?r[0].message:'失败'),r[0]&&r[0].success?'success':'error');}).catch(function(e){toast(e.message,'error');});});}
-function deleteUser(uid,acc){showConfirm('删除用户','确定删除「'+acc+'」？\n所有数据将被清除！',function(){rpc('admin_delete_user',{p_admin_id:currentAdmin.user_id,p_target_user_id:uid}).then(function(r){if(r[0]&&r[0].success){toast(r[0].message,'success');loadUsers();loadTeams();}else toast(r[0]?r[0].message:'失败','error');}).catch(function(e){toast(e.message,'error');});});}
+function changePassword(uid,acc){
+    showPasswordModal(function(pw){
+        rpc('admin_reset_password',{p_admin_id:currentAdmin.user_id,p_target_user_id:uid,p_new_password:pw}).then(function(r){
+            toast(r[0]&&r[0].success?'密码已重置':(r[0]?r[0].message:'失败'),r[0]&&r[0].success?'success':'error');
+        }).catch(function(e){toast(e.message,'error');});
+    });
+}
+function deleteUser(uid,acc){
+    showConfirm('删除用户','确定删除「'+acc+'」？',function(){
+        rpc('admin_delete_user',{p_admin_id:currentAdmin.user_id,p_target_user_id:uid}).then(function(r){
+            if(r[0]&&r[0].success){toast(r[0].message,'success');loadUsers();loadTeams();}
+            else toast(r[0]?r[0].message:'失败','error');
+        }).catch(function(e){toast(e.message,'error');});
+    });
+}
 
+// ==================== 用户组 ====================
 function loadTeams(){
     var t=document.getElementById('teamTableBody');t.innerHTML='<tr><td colspan="3">加载中...</td></tr>';
     rpc('admin_get_teams',{p_admin_id:currentAdmin.user_id}).then(function(teams){
@@ -196,14 +366,21 @@ document.getElementById('createTeamBtn').addEventListener('click',function(){
     }).catch(function(e){toast(e.message,'error');});
 });
 document.getElementById('refreshTeamsBtn').addEventListener('click',loadTeams);
-function deleteTeam(id,name){showConfirm('删除用户组','确定删除「'+name+'」？',function(){rpc('admin_delete_team',{p_admin_id:currentAdmin.user_id,p_team_id:id}).then(function(r){if(r[0]&&r[0].success){toast(r[0].message,'success');loadTeams();}else toast(r[0]?r[0].message:'失败','error');}).catch(function(e){toast(e.message,'error');});});}
+function deleteTeam(id,name){
+    showConfirm('删除用户组','确定删除「'+name+'」？',function(){
+        rpc('admin_delete_team',{p_admin_id:currentAdmin.user_id,p_team_id:id}).then(function(r){
+            if(r[0]&&r[0].success){toast(r[0].message,'success');loadTeams();}
+            else toast(r[0]?r[0].message:'失败','error');
+        }).catch(function(e){toast(e.message,'error');});
+    });
+}
 function viewMembers(tid,tname){
     var c=document.getElementById('teamMemberContent');document.getElementById('teamMemberTitle').textContent=tname+' - 成员';c.innerHTML='加载中...';showModal('teamMemberModal');
     Promise.all([rpc('admin_get_team_members',{p_admin_id:currentAdmin.user_id,p_team_id:tid}),rpc('admin_get_ungrouped_users',{p_admin_id:currentAdmin.user_id})]).then(function(r){
         var members=r[0],ungrouped=r[1],h='';
         if(members&&members.length){h+='<table style="margin-bottom:12px;"><tr><th>用户</th><th>操作</th></tr>';
-            members.forEach(function(m){h+='<tr><td>'+m.account+' ('+(m.real_name||'')+')</td><td><button class="btn btn-xs btn-danger remove-mbr-btn" data-tid="'+tid+'" data-uid="'+m.user_id+'" data-acc="'+m.account+'" data-tname="'+tname+'">移除</button></td></tr>';});h+='</table>';}
-        else h+='<p style="color:#9ca3af;">暂无成员</p>';
+            members.forEach(function(m){h+='<tr><td>'+m.account+' ('+(m.real_name||'')+')</td><td><button class="btn btn-xs btn-danger remove-mbr-btn" data-tid="'+tid+'" data-uid="'+m.user_id+'" data-acc="'+m.account+'" data-tname="'+tname+'">移除</button></td></tr>';});
+            h+='</table>';}else h+='<p style="color:#9ca3af;">暂无成员</p>';
         if(ungrouped&&ungrouped.length){h+='<select id="addMemberSelect" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px;"><option value="">选择用户...</option>';
             ungrouped.forEach(function(u){h+='<option value="'+u.user_id+'">'+u.account+' ('+(u.real_name||'')+')</option>';});
             h+='</select><button class="btn btn-primary btn-sm" id="addMbrBtn">➕ 添加</button>';}else h+='<p style="color:#9ca3af;">所有用户已分组</p>';
@@ -215,6 +392,7 @@ document.getElementById('closeMemberBtn').addEventListener('click',function(){hi
 function addMember(tid,tname){var s=document.getElementById('addMemberSelect');if(!s||!s.value){toast('请选择用户','error');return;}rpc('admin_add_user_to_team',{p_admin_id:currentAdmin.user_id,p_user_id:parseInt(s.value),p_team_id:tid}).then(function(r){if(r[0]&&r[0].success){toast(r[0].message,'success');viewMembers(tid,tname);loadTeams();}else toast(r[0]?r[0].message:'失败','error');}).catch(function(e){toast(e.message,'error');});}
 function removeMember(tid,uid,acc,tname){showConfirm('移除成员','确定将「'+acc+'」从「'+tname+'」移除？',function(){rpc('admin_remove_user_from_team',{p_admin_id:currentAdmin.user_id,p_user_id:uid,p_team_id:tid}).then(function(r){if(r[0]&&r[0].success){toast(r[0].message,'success');viewMembers(tid,tname);loadTeams();}else toast(r[0]?r[0].message:'失败','error');}).catch(function(e){toast(e.message,'error');});});}
 
+// ==================== 导出 ====================
 document.getElementById('exportBtn').addEventListener('click',function(){
     var table=document.getElementById('exportTable').value,format=document.getElementById('exportFormat').value;
     var s=document.getElementById('exportStatus');s.textContent='导出中...';
@@ -229,6 +407,7 @@ document.getElementById('exportBtn').addEventListener('click',function(){
     }).catch(function(e){s.textContent='❌ '+e.message;toast(e.message,'error');});
 });
 
+// ==================== 备份 ====================
 document.getElementById('backupBtn').addEventListener('click',function(){
     var s=document.getElementById('backupStatus');s.textContent='备份中...';
     rpc('admin_backup_all',{p_admin_id:currentAdmin.user_id}).then(function(data){
@@ -237,7 +416,6 @@ document.getElementById('backupBtn').addEventListener('click',function(){
         shareOrDownload(blob,fn,s,'备份');
     }).catch(function(e){s.textContent='❌ '+e.message;toast(e.message,'error');});
 });
-
 document.getElementById('restoreBtn').addEventListener('click',function(){
     var file=document.getElementById('restoreFile').files[0];
     if(!file){toast('请选择备份文件','error');return;}
